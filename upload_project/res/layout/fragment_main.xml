@@ -9,8 +9,17 @@
     tools:context="com.lovebaby.uploadfileprj.MainActivity$PlaceholderFragment" >
 
     <TextView
+        android:id="@+id/tx_hello"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/hello_world" />
 
+    <Button
+        android:id="@+id/bt_start_upload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="开始上传" 
+        android:layout_below="@id/tx_hello"
+        />
+    
 </RelativeLayout>

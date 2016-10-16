@@ -7,7 +7,9 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 public class MainActivity extends Activity {
 
@@ -22,6 +24,18 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	public void initButton(){
+		Button btStartUpload = (Button) findViewById(R.id.bt_start_upload);
+		btStartUpload.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				UploadFileInfo fileInfo = new UploadFileInfo();
+				UploadFileUtils.uploadSingleFile(fileInfo, MainActivity.this);
+			}
+		});
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 

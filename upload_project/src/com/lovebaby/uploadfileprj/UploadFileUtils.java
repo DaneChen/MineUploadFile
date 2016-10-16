@@ -1,6 +1,7 @@
 package com.lovebaby.uploadfileprj;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import android.content.Context;
@@ -102,32 +103,27 @@ public class UploadFileUtils {
 		
 		@Override
 		public void onSuccess(UploadFileInfo uploadInfo) {
-			// TODO Auto-generated method stub
-			
+			LogUtils.d("onSuccess..");
 		}
 		
 		@Override
 		public void onProgress(UploadFileInfo uploadInfo) {
-			// TODO Auto-generated method stub
-			
+			LogUtils.d("onProgress..");
 		}
 		
 		@Override
 		public void onError(UploadFileInfo uploadInfo, String errorMsg) {
-			// TODO Auto-generated method stub
-			
+			LogUtils.d("onError..");
 		}
 		
 		@Override
 		public void onCompleted(UploadFileInfo uploadInfo) {
-			// TODO Auto-generated method stub
-			
+			LogUtils.d("onCompleted..");
 		}
 		
 		@Override
 		public void onCancelled(UploadFileInfo uploadInfo) {
-			// TODO Auto-generated method stub
-			
+			LogUtils.d("onCancelled..");
 		}
 	};
 	
@@ -141,12 +137,30 @@ public class UploadFileUtils {
 		{
 			uploadTasksMap = new ConcurrentHashMap<Integer, UploadTaskInfo>();
 		}
-		return uploadTasksMap.size() + 1;
+		int size = uploadTasksMap.size();
+		if( size == 0)
+		{
+			return ((size + 1)*10 + 1);
+		}else{
+			int maxKey = 0;
+			for( Map.Entry<Integer, UploadTaskInfo> entry:uploadTasksMap.entrySet())
+			{
+				int key = entry.getKey().intValue();
+				if(key > maxKey)
+				{
+					maxKey = key;
+				}
+			}
+			return maxKey + 1;
+		}
 	}
 	
 	/**
-	 * 生成fileId
-	 * @param taskId 任务id
+	 * 生成fileId 
+	 * 
+	 * taskId*10 + index
+	 * 
+	 * @param taskId 任务id 
 	 * @param fileIndex 文件编号
 	 * @return
 	 */

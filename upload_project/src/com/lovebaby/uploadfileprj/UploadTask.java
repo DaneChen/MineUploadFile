@@ -78,7 +78,8 @@ public class UploadTask implements Runnable {
 	            conn.setRequestProperty("Connection", "Keep-Alive");  
 	            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.1; zh-CN; rv:1.9.2.6)");  
 	            conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY);  
-	  
+	            conn.connect();
+	            
 	            OutputStream out = new DataOutputStream(conn.getOutputStream());  
 	            // text    
 	            if (mUploadFileInfo.getBizDataMap() != null) {  
@@ -124,6 +125,8 @@ public class UploadTask implements Runnable {
                     byte[] bufferOut = new byte[1024];  
                     while ((bytes = in.read(bufferOut)) != -1) {  
                         out.write(bufferOut, 0, bytes); 
+                        //TODO进度
+                        
                     }  
                     in.close();  
                 }  
@@ -133,7 +136,18 @@ public class UploadTask implements Runnable {
 	            out.flush();  
 	            out.close();  
 	  
-	            // 读取返回数据    
+	            //结果
+	            int resultCode = conn.getResponseCode();
+	            if( resultCode == 200)
+	            {
+	            	//成功
+	            	
+	            }else{
+	            	//失败
+	            	
+	            }
+	            
+	          /*  // 读取返回数据    
 	            StringBuffer strBuf = new StringBuffer();  
 	            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));  
 	            String line = null;  
@@ -142,11 +156,13 @@ public class UploadTask implements Runnable {
 	            }  
 	            //res = strBuf.toString();  
 	            reader.close();  
-	            reader = null;  
+	            reader = null;  */
 	        } catch (Exception e) {  
 	           // System.out.println("发送POST请求出错。" + urlStr);  
-	        	LogUtils.e("发送POST请求出错!");
-	            e.printStackTrace();  
+	        	//LogUtils.e("发送POST请求出错!");
+	            e.printStackTrace(); 
+	            //TODO出错
+	            
 	        } finally {  
 	            if (conn != null) {  
 	                conn.disconnect();  
