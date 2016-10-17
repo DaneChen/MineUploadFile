@@ -2,6 +2,7 @@ package com.lovebaby.uploadfileprj;
 
 import java.net.FileNameMap;
 import java.net.URLConnection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,6 +42,43 @@ public class Tools {
 			}
 			fixedThreadPool.execute(runnable);
 		}
+	}
+	
+	/**
+	 * list是否为空
+	 * @param paramList
+	 * @return
+	 */
+	public static boolean isListAvailable(List<?> paramList)
+	{
+		if( paramList == null || paramList.size() == 0)
+		{
+			LogUtils.e("paramList is null!");
+			return false;
+		}
+		return true;
+	}
+	
+	
+	/**
+	 * index在list中是否有效
+	 * @param paramIndex
+	 * @param paramList
+	 * @return
+	 */
+	public static boolean isIndexAvailableInList(int paramIndex, List<?> paramList)
+	{
+		if(!isListAvailable(paramList))
+		{
+			LogUtils.e("paramList is null!");
+			return false;
+		}
+		if( paramIndex >= paramList.size())
+		{
+			LogUtils.e("paramIndex is oversize!");
+			return false;
+		}
+		return true;
 	}
 	
 }

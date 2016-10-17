@@ -1,6 +1,7 @@
 package com.lovebaby.uploadfileprj;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ public class UploadTaskInfo {
 	public UploadTaskInfo(int taskID)
 	{
 		uploadTaskId = taskID;
-		uploadFileInfoList = new ArrayList<UploadFileInfo>();
+		uploadFileInfoList = Collections.synchronizedList(new ArrayList<UploadFileInfo>());
 	}
 	
 	public int getUploadTaskId() {
@@ -51,5 +52,47 @@ public class UploadTaskInfo {
 	}
 	public void setSuccessNum(int successNum) {
 		this.successNum = successNum;
+	}
+	
+	/**
+	 * 根据fileId 获取文件信息类
+	 * @param paramFileInfoList
+	 * @param paramFileId
+	 * @return
+	 */
+	public  UploadFileInfo getFileInfoByFileId(int paramFileId)
+	{
+		if(!Tools.isListAvailable(uploadFileInfoList))
+		{
+			return null;
+		}
+		int size = uploadFileInfoList.size();
+		for( int i = 0; i < size; i ++)
+		{
+			UploadFileInfo tempInfo = uploadFileInfoList.get(i);
+			if(tempInfo == null)
+				continue;
+			
+			if( tempInfo.getUploadFileId() == paramFileId)
+			{
+				return tempInfo;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 根据fileId 移除文件信息
+	 * @param paramFileId
+	 */
+	public boolean removeFileInfoByFileId(int paramFileId)
+	{
+		UploadFileInfo fileInfo = getFileInfoByFileId(paramFileId);
+		 if( fileInfo == null)
+		 {
+			 LogUtils.e("fileInfo is null>error!");
+			 return false;
+		 }
+		 return uploadFileInfoList.remove(fileInfo);
 	}
 }

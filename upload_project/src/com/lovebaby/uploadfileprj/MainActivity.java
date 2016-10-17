@@ -24,14 +24,14 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	public void initButton(){
-		Button btStartUpload = (Button) findViewById(R.id.bt_start_upload);
+	public static void initButton(View view){
+		Button btStartUpload = (Button) view.findViewById(R.id.bt_start_upload);
 		btStartUpload.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
 				UploadFileInfo fileInfo = new UploadFileInfo();
-				UploadFileUtils.uploadSingleFile(fileInfo, MainActivity.this);
+				UploadFileUtils.uploadSingleFile(fileInfo, v.getContext());
 			}
 		});
 	}
@@ -69,6 +69,7 @@ public class MainActivity extends Activity {
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.fragment_main, container,
 					false);
+			initButton(rootView);
 			return rootView;
 		}
 	}

@@ -10,6 +10,7 @@ import android.os.IBinder;
 
 /**
  * 使用http post方式，在后台上传文件的service
+ * 所以提交下来的任务都是以文件为单位
  * @author chengr
  *
  */
@@ -21,7 +22,7 @@ public class UploadService extends Service {
 	private static final Map<Integer, UploadTask> uploadTasksMap = new ConcurrentHashMap<Integer, UploadTask>();
 
 	@Override
-	public void onCreate(){
+	public void onCreate(){ 
 		super.onCreate();
 	}
 	
@@ -42,7 +43,12 @@ public class UploadService extends Service {
         	LogUtils.e("taskId is 0 >error!");
         	return START_STICKY;
         }
-        Tools.openFixedThread(getTaskFromMap(taskId));
+        UploadTask task =  getTaskFromMap(taskId);
+        if( task != null)
+        {
+        	task.setmService(this);
+            Tools.openFixedThread(task);
+        }
         return START_STICKY;
     }
 	
@@ -74,7 +80,7 @@ public class UploadService extends Service {
      * 结束了某个任务
      * @param uploadId
      */
-    protected synchronized void taskCompleted(String uploadId) {
+    public synchronized  void taskCompleted(int uploadId) {
         UploadTask task = uploadTasksMap.remove(uploadId);
         // 当所有任务都结束了，停止server本身
         if (uploadTasksMap.isEmpty()) {
@@ -90,11 +96,25 @@ public class UploadService extends Service {
             return;
         }
 
-        Iterator<Integer> iterator = uploadTasksMap.keySet().iterator();
+        Integer[] keySet = uploadTasksMap.keySet().toArray(new Integer[0]);
+        for( Integer key : keySet)
+        {
+        	 UploadTask taskToCancel = uploadTasksMap.get(key);
+        	 if( taskToCancel != null)
+        	 {
+        		 taskToCancel.cancel();
+        	 }else
+        	 {
+        		 LogUtils.e("taskToCancel is null>error!");
+        	 }
+        }
+        
+        /*Iterator<Integer> iterator = uploadTasksMap.keySet().iterator();
         while (iterator.hasNext()) {
             UploadTask taskToCancel = uploadTasksMap.get(iterator.next());
             taskToCancel.cancel();
-        }
+        }*/
+        
     }
 
     private int shutdownIfThereArentAnyActiveTasks() {
@@ -105,13 +125,13 @@ public class UploadService extends Service {
         return START_STICKY;
     }
     
-    private UploadTask getTaskFromMap(int taskId)
+    public static UploadTask getTaskFromMap(int paramFileId)
     {
     	if( uploadTasksMap == null)
     	{
     		return null;
     	}
-    	return uploadTasksMap.get(taskId);
+    	return uploadTasksMap.get(paramFileId);
     }
     
 }

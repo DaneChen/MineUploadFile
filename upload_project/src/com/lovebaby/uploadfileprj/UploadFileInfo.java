@@ -20,8 +20,8 @@ public class UploadFileInfo {
 	private int uploadTaskId;//归属的任务id
 	private int uploadFileId;//上传的文件id
 	
-	private int uploadStatus;//上传状态
-	private float uploadProgress;//上传进度
+	private int uploadStatus;//上传状态 UploadStatus
+	private double uploadProgress;//上传进度
 	
 	public int getUploadTaskId() {
 		return uploadTaskId;
@@ -71,10 +71,10 @@ public class UploadFileInfo {
 	public void setUploadStatus(int uploadStatus) {
 		this.uploadStatus = uploadStatus;
 	}
-	public float getUploadProgress() {
+	public double getUploadProgress() {
 		return uploadProgress;
 	}
-	public void setUploadProgress(float uploadProgress) {
+	public void setUploadProgress(double uploadProgress) {
 		this.uploadProgress = uploadProgress;
 	}
 }

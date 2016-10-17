@@ -26,4 +26,11 @@ public class UploadConstant {
 		public static final int UPLOAD_STATUS_PAUSE = 4;//上传暂停
 		public static final int UPLOAD_STATUS_FAIL = 5;//上传失败
 	}
+	
+	
+	//上传出错提示
+	public static final String UPLOAD_FAIL_FILE_NOT_EXIST = "上传文件不存在";
+	public static final String UPLOAD_FAIL_FILE_DEAL_ERROR = "文件处理出错";
+	public static final String UPLOAD_FAIL_NET_ERROR = "网络出错";
+	
 }

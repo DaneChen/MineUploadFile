@@ -12,6 +12,8 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.lovebaby.uploadfileprj.UploadConstant.UploadStatus;
+
 /**
  * @author chengr
  *
@@ -22,6 +24,9 @@ public class UploadTask implements Runnable {
 	private UploadFileInfo mUploadFileInfo;
 	//上传结果回调
 	private UploadFileInterface mUploadFileInterface;
+	
+	private UploadService mService;
+	
 	
 	public UploadTask(UploadFileInfo paramUploadFileInfo, UploadFileInterface paramUploadFileInterface)
 	{
@@ -45,6 +50,8 @@ public class UploadTask implements Runnable {
 			LogUtils.e("mUploadFileInfo is null>error!");
 			return;
 		}
+		//状态改为正在上传
+		mUploadFileInfo.setUploadStatus(UploadConstant.UploadStatus.UPLOAD_STATUS_UPLOADING);
 		
 		if( mUploadFileInfo.getUploadType() == UploadConstant.UploadType.POST_BY_LOCAL_SERVER)
 		{
@@ -102,34 +109,36 @@ public class UploadTask implements Runnable {
 	            // file    
 	            if( Tools.isStringBlank(mUploadFileInfo.getFilePath()))
 	            {
-	            	//出错
+	            	//出错 TODO
+	            	uploadFail(UploadConstant.UPLOAD_FAIL_FILE_NOT_EXIST);
 	            	return;
 	            }
 	            
-	            if (mUploadFileInfo.getFilePath() != null) {  
-                    String inputName = "multipartFile";  
-                    String inputValue = (String)mUploadFileInfo.getFilePath();  
-                    File file = new File(inputValue);  
-                    String filename = file.getName();  
-                    String contentType = Tools.getMimeType(inputValue); 
+                String inputName = "multipartFile";  
+                String inputValue = mUploadFileInfo.getFilePath();  
+                File file = new File(inputValue);  
+                long totalSize = file.length();
+                    
+                String filename = file.getName();  
+                String contentType = Tools.getMimeType(inputValue); 
   
-                    StringBuffer strBuf = new StringBuffer();  
-                    strBuf.append("\r\n").append("--").append(BOUNDARY).append("\r\n");  
-                    strBuf.append("Content-Disposition: form-data; name=\"" + inputName + "\"; filename=\"" + filename + "\"\r\n");  
-                    strBuf.append("Content-Type:" + contentType + "\r\n\r\n");  
+                StringBuffer strBuf = new StringBuffer();  
+                strBuf.append("\r\n").append("--").append(BOUNDARY).append("\r\n");  
+                strBuf.append("Content-Disposition: form-data; name=\"" + inputName + "\"; filename=\"" + filename + "\"\r\n");  
+                strBuf.append("Content-Type:" + contentType + "\r\n\r\n");  
   
-                    out.write(strBuf.toString().getBytes());  
+                out.write(strBuf.toString().getBytes());  
   
-                    DataInputStream in = new DataInputStream(new FileInputStream(file));  
-                    int bytes = 0;  
-                    byte[] bufferOut = new byte[1024];  
-                    while ((bytes = in.read(bufferOut)) != -1) {  
-                        out.write(bufferOut, 0, bytes); 
-                        //TODO进度
-                        
-                    }  
-                    in.close();  
+                DataInputStream in = new DataInputStream(new FileInputStream(file));  
+                int bytes = 0;  
+                byte[] bufferOut = new byte[1024];  
+                while ((bytes = in.read(bufferOut)) != -1) {  
+                     out.write(bufferOut, 0, bytes); 
+                     //TODO 进度
+                     bytes = bytes + bufferOut.length;
+                     uploadProgress((bytes*1.0)/totalSize);
                 }  
+                in.close();  
 	  
 	            byte[] endData = ("\r\n--" + BOUNDARY + "--\r\n").getBytes();  
 	            out.write(endData);  
@@ -140,11 +149,11 @@ public class UploadTask implements Runnable {
 	            int resultCode = conn.getResponseCode();
 	            if( resultCode == 200)
 	            {
-	            	//成功
-	            	
+	            	//TODO 成功
+	            	uploadSuccess();
 	            }else{
-	            	//失败
-	            	
+	            	//TODO 失败
+	            	uploadFail(UploadConstant.UPLOAD_FAIL_NET_ERROR);
 	            }
 	            
 	          /*  // 读取返回数据    
@@ -161,8 +170,8 @@ public class UploadTask implements Runnable {
 	           // System.out.println("发送POST请求出错。" + urlStr);  
 	        	//LogUtils.e("发送POST请求出错!");
 	            e.printStackTrace(); 
-	            //TODO出错
-	            
+	            //TODO 出错
+	            uploadFail(UploadConstant.UPLOAD_FAIL_FILE_NOT_EXIST);
 	        } finally {  
 	            if (conn != null) {  
 	                conn.disconnect();  
@@ -177,17 +186,150 @@ public class UploadTask implements Runnable {
 	private void uploadFileToQiNiuServer()
 	{
 		//1、获取token
+		getTokenFromServer();
 		
 		//2、上传到七牛
+		uploaToQiniu();
 		
+		//3、设置信息到本地服务器
+		setFileInfoToLocalServer();
 	}
 	
 	/**
-	 * 设置文件信息到本地服务器
+	 * 1、获取token
+	 */
+	private void getTokenFromServer()
+	{
+		//TODO
+	}
+	
+	/**
+	 * 2、上传照片到七牛
+	 */
+	private void uploaToQiniu()
+	{
+		//TODO
+	}
+	
+	/**
+	 * 3、设置文件信息到本地服务器
 	 */
 	private void setFileInfoToLocalServer()
 	{
+		//TODO
+	}
+	
+	/**
+	 * 上传成功的处理
+	 */
+	private void uploadSuccess()
+	{
+		if(!checkStatusIsUploading())
+		{
+			LogUtils.e("status is not uploading!");
+			return;
+		}
 		
+		//修改状态
+		mUploadFileInfo.setUploadStatus(UploadConstant.UploadStatus.UPLOAD_STATUS_SUCCESS);
+		
+		//回调
+		if( mUploadFileInterface == null)
+		{
+			LogUtils.e("mUploadFileInterface is null>error!");
+		}
+		else
+		{
+			mUploadFileInterface.onSuccess(mUploadFileInfo);
+		}
+
+		//移除线程池中的任务
+		stopThisTaskInService();
+	}
+	
+	/**
+	 * 上传失败处理
+	 */
+	private void uploadFail(String paramErrMsg)
+	{
+		if(!checkStatusIsUploading())
+		{
+			LogUtils.e("status is not uploading!");
+			return;
+		}
+		
+		//修改状态
+		mUploadFileInfo.setUploadStatus(UploadConstant.UploadStatus.UPLOAD_STATUS_FAIL);
+		
+		//回调
+		if( mUploadFileInterface == null)
+		{
+			LogUtils.e("mUploadFileInterface is null>error!");
+		}
+		else
+		{
+			mUploadFileInterface.onError(mUploadFileInfo, paramErrMsg);
+		}
+		
+		//移除线程池中的任务
+		stopThisTaskInService();
+	}
+	
+	/**
+	 * 上传进度处理
+	 */
+	private void uploadProgress(double paramProgress)
+	{
+		if(!checkStatusIsUploading())
+		{
+			LogUtils.e("status is not uploading!");
+			return;
+		}
+		//修改状态
+		mUploadFileInfo.setUploadStatus(UploadConstant.UploadStatus.UPLOAD_STATUS_UPLOADING);
+		
+		//回调
+		if( mUploadFileInterface == null)
+		{
+			LogUtils.e("mUploadFileInterface is null>error!");
+		}
+		else
+		{
+			mUploadFileInfo.setUploadProgress(paramProgress);
+			mUploadFileInterface.onProgress(mUploadFileInfo);
+		}
+	}
+	
+	/**
+	 * 移除线程池中的任务
+	 */
+	public void stopThisTaskInService()
+	{
+		if( mService == null)
+		{
+			LogUtils.e("mService is null>error!");
+		}else
+		{
+			mService.taskCompleted(mUploadFileInfo.getUploadFileId());
+		}
+	}
+	
+	/**
+	 * 检查是否正在上传 
+	 * @return false为不可上传，返回的回调都不用执行
+	 */
+	private boolean checkStatusIsUploading()
+	{
+		//UploadStatus
+		int status = mUploadFileInfo.getUploadStatus();
+		switch(status)
+		{
+			case UploadStatus.UPLOAD_STATUS_CANCEL://取消
+			case UploadStatus.UPLOAD_STATUS_PAUSE://暂停
+				return false;
+			default:
+				return true;
+		}
 	}
 	
 	
@@ -205,5 +347,13 @@ public class UploadTask implements Runnable {
 
 	public void setmUploadFileInterface(UploadFileInterface mUploadFileInterface) {
 		this.mUploadFileInterface = mUploadFileInterface;
+	}
+
+	public UploadService getmService() {
+		return mService;
+	}
+
+	public void setmService(UploadService mService) {
+		this.mService = mService;
 	}
 }
