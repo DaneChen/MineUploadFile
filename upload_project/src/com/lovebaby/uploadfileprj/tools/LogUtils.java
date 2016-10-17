@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
-package com.lovebaby.uploadfileprj;
+package com.lovebaby.uploadfileprj.tools;
+
+import com.lovebaby.uploadfileprj.UploadConstant;
 
 import android.text.TextUtils;
 import android.util.Log;

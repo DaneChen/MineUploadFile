@@ -1,4 +1,4 @@
-package com.lovebaby.uploadfileprj;
+package com.lovebaby.uploadfileprj.tools;
 
 import java.net.FileNameMap;
 import java.net.URLConnection;

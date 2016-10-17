@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.lovebaby.uploadfileprj.tools.LogUtils;
+import com.lovebaby.uploadfileprj.tools.Tools;
+
 /**
  * 上传任务信息 ，里面可能包含多个文件的上传信息
  * @author chengr

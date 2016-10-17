@@ -3,6 +3,9 @@ package com.lovebaby.uploadfileprj;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.lovebaby.uploadfileprj.tools.LogUtils;
+import com.lovebaby.uploadfileprj.tools.Tools;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
