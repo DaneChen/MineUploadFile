@@ -15,10 +15,8 @@ import org.apache.http.message.BasicNameValuePair;
 
 public class OkHttpTools {
 	 private static final OkHttpClient mOkHttpClient = new OkHttpClient();
-	    static{
-	       // mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS);
-	    }
-	    /**
+
+	 	/**
 	     * 该不会开启异步线程。
 	     * @param request
 	     * @return
