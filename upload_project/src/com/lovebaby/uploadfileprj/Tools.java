@@ -44,6 +44,14 @@ public class Tools {
 		}
 	}
 	
+	public static void shutDowThreadPool()
+	{
+		if( fixedThreadPool != null)
+		{
+			fixedThreadPool.isShutdown();
+		}
+	}
+	
 	/**
 	 * list是否为空
 	 * @param paramList

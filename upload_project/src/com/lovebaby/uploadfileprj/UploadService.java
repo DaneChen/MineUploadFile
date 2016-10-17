@@ -1,6 +1,5 @@
 package com.lovebaby.uploadfileprj;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -57,6 +56,7 @@ public class UploadService extends Service {
         super.onDestroy();
         stopAllUploads();
         uploadTasksMap.clear();
+        Tools.shutDowThreadPool();
     }
 	
     public static synchronized boolean addTaskToService(int fileId, UploadTask paramTask)
@@ -108,13 +108,6 @@ public class UploadService extends Service {
         		 LogUtils.e("taskToCancel is null>error!");
         	 }
         }
-        
-        /*Iterator<Integer> iterator = uploadTasksMap.keySet().iterator();
-        while (iterator.hasNext()) {
-            UploadTask taskToCancel = uploadTasksMap.get(iterator.next());
-            taskToCancel.cancel();
-        }*/
-        
     }
 
     private int shutdownIfThereArentAnyActiveTasks() {

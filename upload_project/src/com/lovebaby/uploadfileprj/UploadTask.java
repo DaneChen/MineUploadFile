@@ -39,7 +39,10 @@ public class UploadTask implements Runnable {
 	 */
 	public void cancel()
 	{
-		
+		if(mUploadFileInfo != null)
+		{
+			mUploadFileInfo.setUploadStatus(UploadStatus.UPLOAD_STATUS_CANCEL);
+		}
 	}
 	
 	@Override

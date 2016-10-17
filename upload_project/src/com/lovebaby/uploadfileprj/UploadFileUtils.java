@@ -21,18 +21,20 @@ public class UploadFileUtils {
 	/**
 	 * 上传单个文件
 	 * @param paramFileInfo 文件信息
+	 * @param paramCallBack 上传的回调
 	 * @return 返回文件信息的操作id
 	 */
-	public static int uploadSingleFile(UploadFileInfo paramFileInfo, Context paramContext)
+	public static int uploadSingleFile(UploadFileInfo paramFileInfo, UploadFileCallBack paramCallBack, Context paramContext)
 	{
-		if( paramFileInfo == null)
+		if( paramFileInfo == null|| paramContext == null)
 		{
+			LogUtils.e("input error!");
 			return 0;
 		}
 		
 		//1、生成上传任务id
 		int taskId = createTaskId();
-		UploadTaskInfo taskInfo = new UploadTaskInfo(taskId);
+		UploadTaskInfo taskInfo = new UploadTaskInfo(taskId, paramCallBack);
 		
 		//2、生成文件id
 		int fileId = createFileId(taskId, 1);
@@ -46,18 +48,49 @@ public class UploadFileUtils {
 		
 		//4、提交任务到service
 		commitTask(fileId, uploadTask, paramContext);
-		//5、更新状态
 		return 0;
 	}
 	
 	/**
 	 * 上传多个文件
 	 * @param paramFileInfoList 文件信息列表
+	 * @param paramCallBack 上传的回调
 	 * @param paramContext 上下文
 	 */
-	public static void uploadMultiFiles(List<UploadFileInfo> paramFileInfoList, Context paramContext)
+	public static int[] uploadMultiFiles(List<UploadFileInfo> paramFileInfoList, UploadFileCallBack paramCallBack, Context paramContext)
 	{
+		int fileIdList[];
+		if( !Tools.isListAvailable(paramFileInfoList)|| paramContext == null)
+		{
+			LogUtils.e("input error!");
+			return new int[0];
+		}
+		int size = paramFileInfoList.size();
+		fileIdList = new int[size];
 		
+		for( int i = 0; i < size; i++)
+		{
+			UploadFileInfo fileInfo = paramFileInfoList.get(i);
+			//1、生成上传任务id
+			int taskId = createTaskId();
+			UploadTaskInfo taskInfo = new UploadTaskInfo(taskId, paramCallBack);
+			
+			//2、生成文件id
+			int fileId = createFileId(taskId, i+1);
+			fileInfo.setUploadTaskId(taskId);
+			fileInfo.setUploadFileId(fileId);
+			taskInfo.getUploadFileInfoList().add(fileInfo);
+			uploadTasksMap.put(taskId, taskInfo);
+			
+			//3、生成上传任务task
+			UploadTask uploadTask = new UploadTask(fileInfo, sUploadFileInterface);
+			
+			//4、提交任务到service
+			commitTask(fileId, uploadTask, paramContext);
+			
+			fileIdList[i] = fileId;
+		}
+		return fileIdList;
 	}
 	
 	/**
@@ -70,13 +103,7 @@ public class UploadFileUtils {
 		 removeOneFile(paramFileId);
 	     
 	     //清除service中的任务
-	     UploadTask task = UploadService.getTaskFromMap(paramFileId);
-	     if( task == null)
-	     {
-	    	 LogUtils.e("task is null");
-	    	 return;
-	     }
-	     task.stopThisTaskInService();
+		 stopTaskInService(paramFileId);
 	}
 	
 	/**
@@ -84,16 +111,38 @@ public class UploadFileUtils {
 	 * @param paramFileId
 	 */
 	public static void pauseOneFile(int paramFileId){
-		
+		 stopTaskInService(paramFileId);
 	}
 	
 	/**
 	 * 继续单个文件上传
 	 * @param paramFileId 文件id
 	 */
-	public static void continueOneFile(int paramFileId)
+	public static void continueOneFile(int paramFileId, Context paramContext)
 	{
+		if( paramContext == null)
+		{
+			LogUtils.e("input error!");
+			return;
+		}
 		
+		UploadTaskInfo taskInfo = getTaskInfoByFileId(paramFileId);
+		if( taskInfo == null)
+		{
+			LogUtils.e("taskInfo is null>error!");
+			return;
+		}
+		UploadFileInfo fileInfo = getFileInfoByFileId(paramFileId);
+		if( fileInfo == null)
+		{
+			LogUtils.e("fileInfo is null>error");
+			return;
+		}
+		//3、生成上传任务task
+		UploadTask uploadTask = new UploadTask(fileInfo, sUploadFileInterface);
+		
+		//4、提交任务到service
+		commitTask(paramFileId, uploadTask, paramContext);
 	}
 	
 	/*********************************操作一个任务************************************/
@@ -103,7 +152,22 @@ public class UploadFileUtils {
 	 */
 	public static void cancelOneTask(int paramTaskId)
 	{
-		
+		UploadTaskInfo taskInfo = removeOneTask(paramTaskId);
+		if( taskInfo == null)
+		{
+			LogUtils.e("taskInfo is null>error!");
+			return;
+		}
+		List<UploadFileInfo> fileInfoList = taskInfo.getUploadFileInfoList();
+		if( !Tools.isListAvailable(fileInfoList))
+		{
+			LogUtils.e("fileInfoList is null>error!");
+			return;
+		}
+		for( int i = 0; i < fileInfoList.size(); i++)
+		{
+			stopTaskInService(fileInfoList.get(i).getUploadFileId());
+		}
 	}
 	
 	/**
@@ -146,13 +210,28 @@ public class UploadFileUtils {
 		
 	}
 	
-	/***************任务上传回调************UploadFileInterface*********************************/
+	/*******************任务上传回调************UploadFileInterface*********************************/
 	
 	private static UploadFileInterface sUploadFileInterface = new UploadFileInterface() {
 		
 		@Override
 		public void onSuccess(UploadFileInfo uploadInfo) {
 			LogUtils.d("onSuccess..");
+			//回调
+			if( uploadInfo == null)
+			{
+				LogUtils.e("uploadInfo is null>error!");
+				return;
+			}
+			UploadTaskInfo taskInfo = uploadTasksMap.get(uploadInfo.getUploadTaskId());
+			if( taskInfo == null)
+			{
+				LogUtils.e("task is null>error!");
+				return;
+			}
+			//回调
+			taskInfo.onSuccess(uploadInfo.getUploadFileId());
+			
 			// 移除任务队列中的文件
 			removeOneFile(uploadInfo.getUploadFileId());
 		}
@@ -160,11 +239,37 @@ public class UploadFileUtils {
 		@Override
 		public void onProgress(UploadFileInfo uploadInfo) {
 			LogUtils.d("onProgress..");
+			if( uploadInfo == null)
+			{
+				LogUtils.e("uploadInfo is null>error!");
+				return;
+			}
+			UploadTaskInfo taskInfo = uploadTasksMap.get(uploadInfo.getUploadTaskId());
+			if( taskInfo == null)
+			{
+				LogUtils.e("task is null>error!");
+				return;
+			}
+			//回调
+			taskInfo.onProgress(uploadInfo.getUploadFileId(), uploadInfo.getUploadProgress());
 		}
 		
 		@Override
 		public void onError(UploadFileInfo uploadInfo, String errorMsg) {
 			LogUtils.d("onError..");
+			if( uploadInfo == null)
+			{
+				LogUtils.e("uploadInfo is null>error!");
+				return;
+			}
+			UploadTaskInfo taskInfo = uploadTasksMap.get(uploadInfo.getUploadTaskId());
+			if( taskInfo == null)
+			{
+				LogUtils.e("task is null>error!");
+				return;
+			}
+			//回调
+			taskInfo.onProgress(uploadInfo.getUploadFileId(), uploadInfo.getUploadProgress());
 		}
 		
 		@Override
@@ -284,15 +389,15 @@ public class UploadFileUtils {
 	 * 移除一个任务
 	 * @param paramTaskId 任务id
 	 */
-	private void removeOneTask(int paramTaskId)
+	private static UploadTaskInfo removeOneTask(int paramTaskId)
 	{
-		uploadTasksMap.remove(paramTaskId);
+		return uploadTasksMap.remove(paramTaskId);
 	}
 	
 	/**
 	 * 根据fileId获取所在的taskInfo
 	 */
-	private UploadTaskInfo getTaskInfoByFileId(int paramFileId)
+	private static UploadTaskInfo getTaskInfoByFileId(int paramFileId)
 	{
 		Integer[] keySet = uploadTasksMap.keySet().toArray(new Integer[0]);
 	     for( Integer key : keySet)
@@ -313,5 +418,34 @@ public class UploadFileUtils {
 	     return null;
 	}
 	
+	/**
+	 * 根据 fileId 获取fileInfo 
+	 * @param paramFileId
+	 */
+	private static UploadFileInfo getFileInfoByFileId(int paramFileId)
+	{
+		UploadTaskInfo taskInfo = getTaskInfoByFileId(paramFileId);
+		if( taskInfo == null)
+		{
+			LogUtils.e("taskInfo is null>error!");
+			return null;
+		}
+		return taskInfo.getFileInfoByFileId(paramFileId);
+	}
 	
+	/**
+	 * 移除service中的文件任务
+	 * @param paramFileId
+	 */
+	private static void stopTaskInService(int paramFileId)
+	{
+	     UploadTask task = UploadService.getTaskFromMap(paramFileId);
+	     if( task == null)
+	     {
+	    	 LogUtils.e("task is null");
+	    	 return;
+	     }
+	     task.cancel();
+	     task.stopThisTaskInService();
+	}
 }

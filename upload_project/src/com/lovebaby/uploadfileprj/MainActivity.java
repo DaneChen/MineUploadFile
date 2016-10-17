@@ -31,7 +31,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				UploadFileInfo fileInfo = new UploadFileInfo();
-				UploadFileUtils.uploadSingleFile(fileInfo, v.getContext());
+				UploadFileUtils.uploadSingleFile(fileInfo, null, v.getContext());
 			}
 		});
 	}
