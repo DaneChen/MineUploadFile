@@ -13,11 +13,11 @@ import okhttp3.Response;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 
-public class OkHttpTools {
+public class OkHttp {
 	 private static final OkHttpClient mOkHttpClient = new OkHttpClient();
 
 	 	/**
-	     * 该不会开启异步线程。
+	     * 同步
 	     * @param request
 	     * @return
 	     * @throws IOException
@@ -25,8 +25,9 @@ public class OkHttpTools {
 	    public static Response execute(Request request) throws IOException{
 	        return mOkHttpClient.newCall(request).execute();
 	    }
+	    
 	    /**
-	     * 开启异步线程访问网络
+	     * 异步
 	     * @param request
 	     * @param responseCallback
 	     */
