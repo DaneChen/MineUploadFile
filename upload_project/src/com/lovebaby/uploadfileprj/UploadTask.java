@@ -1,18 +1,19 @@
 package com.lovebaby.uploadfileprj;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSONObject;
 import com.lovebaby.uploadfileprj.UploadConstant.UploadStatus;
+import com.lovebaby.uploadfileprj.network.OkHttpUtils;
+import com.lovebaby.uploadfileprj.tools.JsonTools;
 import com.lovebaby.uploadfileprj.tools.LogUtils;
 import com.lovebaby.uploadfileprj.tools.Tools;
 
@@ -191,10 +192,16 @@ public class UploadTask implements Runnable {
 	private void uploadFileToQiNiuServer()
 	{
 		//1、获取token
-		getTokenFromServer();
+		String token = getTokenFromServer();
+		if( Tools.isStringBlank(token))
+		{
+			LogUtils.e("qiniuToken is null>error!");
+			uploadFail("token为空！");
+			return;
+		}
 		
 		//2、上传到七牛
-		uploaToQiniu();
+		uploaToQiniu(token);
 		
 		//3、设置信息到本地服务器
 		setFileInfoToLocalServer();
@@ -203,15 +210,31 @@ public class UploadTask implements Runnable {
 	/**
 	 * 1、获取token
 	 */
-	private void getTokenFromServer()
+	private String getTokenFromServer()
 	{
 		//TODO
+		SynchNetResponseData backData = OkHttpUtils.postSynch(mUploadFileInfo.getUploadUrl(), mUploadFileInfo.getBizDataMap());
+		if( backData == null || !backData.isSuccess())
+		{
+			LogUtils.e("backData is null or failed!");
+			uploadFail( backData==null ? "未知错误": backData.getErrorMsg());
+			return "";
+		}
+		JSONObject jsObj = backData.getResponseData();
+		if( jsObj == null)
+		{
+			LogUtils.e("jsObj is null>error!");
+			uploadFail("数据解析出错");
+			return "";
+		}
+		String qiniuToken = jsObj.getString("token");
+		return qiniuToken;
 	}
 	
 	/**
 	 * 2、上传照片到七牛
 	 */
-	private void uploaToQiniu()
+	private void uploaToQiniu(String paramToken)
 	{
 		//TODO
 	}

@@ -1,12 +1,14 @@
 package com.lovebaby.uploadfileprj.network;
 
+import com.alibaba.fastjson.JSONObject;
+
 
 public interface NetResultCallBack {
 	/**
 	 * 成功回调函数
 	 * @param paramData 数据
 	 */
-	void onSuccess(String resultData);
+	void onSuccess(JSONObject resultData);
 	
 /*	*//**
 	 * 成功回调函数

@@ -1,7 +1,6 @@
 package com.lovebaby.uploadfileprj.network;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import okhttp3.Call;
@@ -12,29 +11,44 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import com.alibaba.fastjson.JSONObject;
+import com.lovebaby.uploadfileprj.SynchNetResponseData;
+import com.lovebaby.uploadfileprj.tools.JsonTools;
 
 public class OkHttpUtils {
 	
 	 public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-	 private static final int ERROR_CODE_UNKNOW = 1000;
+	 private static final int ERROR_CODE_UNKNOW = 1000;//未知错误的错误id
 	 
-	 //TODO test
-	 private static void callPost()
-	 {
-	    post("123", new HashMap<String, Object>(), new NetResultCallBack() {
-
-			@Override
-			public void onSuccess(String resultData) {
-				
+	/**
+	 * 同步 post
+	 * @param <T>
+	 * @param url 请求地址
+	 * @param paramData 数据
+	 * @param paramCallBack 回调
+	 */
+	public static SynchNetResponseData postSynch(String url, Map<String, String> paramData)
+	{
+		SynchNetResponseData backData = new SynchNetResponseData();
+		Request request = buildPostRequest(url, paramData);
+		try {
+			Response response = OkHttp.execute(request);
+			if (response.isSuccessful()) {
+				backData.setSuccess(true);
+				backData.setResponseData(JsonTools.StrToJsObj(response.body().toString()));
+			} else {
+				backData.setSuccess(false);
+				backData.setErrorCode(response.code());
+				backData.setErrorMsg("网络请求异常");
 			}
-
-			@Override
-			public void onFailed(int paramFailCode, String paramFailMessage) {
-				
-			}
-		});
-	 }
-	 
+		} catch (IOException e) {
+			e.printStackTrace();
+			backData.setSuccess(false);
+			backData.setErrorCode(ERROR_CODE_UNKNOW);
+			backData.setErrorMsg("网络请求异常");
+		}
+		return backData;
+	}
+		
 	/**
 	 * 异步 post
 	 * @param <T>
@@ -42,7 +56,7 @@ public class OkHttpUtils {
 	 * @param paramData 数据
 	 * @param paramCallBack 回调
 	 */
-	public static void post(String url, Map<String, Object> paramData, NetResultCallBack paramCallBack)
+	public static void postAsynch(String url, Map<String, String> paramData, NetResultCallBack paramCallBack)
 	{
 		Request request = buildPostRequest(url, paramData);
 		deliveryResult(request, paramCallBack);
@@ -54,7 +68,7 @@ public class OkHttpUtils {
 	 * @param paramData
 	 * @return
 	 */
-	private static Request buildPostRequest(String url, Map<String, Object> paramData)
+	private static Request buildPostRequest(String url, Map<String, String> paramData)
 	{
 		RequestBody body = RequestBody.create(JSON, mapToJson(paramData));
 	    return new Request.Builder()
@@ -64,14 +78,19 @@ public class OkHttpUtils {
 	}
 	
 	//map转json
-	private static String mapToJson(Map<String, Object> paramData)
+	private static String mapToJson(Map<String, String> paramData)
 	{
 		JSONObject jsObj = new JSONObject();
 		jsObj.putAll(paramData);
 		return jsObj.toJSONString();
 	}
 	
-	private static <T> void deliveryResult(Request request, final NetResultCallBack paramCallBack)
+	/**
+	 * 发送异步请求
+	 * @param request
+	 * @param paramCallBack
+	 */
+	private static  void deliveryResult(Request request, final NetResultCallBack paramCallBack)
     {
 		OkHttp.enqueue(request, new Callback(){
 			@Override
@@ -88,7 +107,8 @@ public class OkHttpUtils {
 				  if (response.isSuccessful()) {
 					  
 					  if( paramCallBack != null){
-		            		paramCallBack.onSuccess(response.body().string());
+						  //TODO 其他判断逻辑
+		            		paramCallBack.onSuccess(JsonTools.StrToJsObj(response.body().string()));
 		            	}
 	            }else{
 	            	if( paramCallBack != null){
